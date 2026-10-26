@@ -2,5 +2,8 @@
   "name": "watchtower",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.0.0"
+  "packageManager": "pnpm@10.0.0",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
 }
