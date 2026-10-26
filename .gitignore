@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+coverage/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# IDE and OS
+.DS_Store
+.idea/
+.vscode/
+
+# Generated tooling files
+**/.agents/
+**/.claude/
+**/.windsurf/
+**/skills-lock.json
