@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Tests, lint and builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: watchtower
+          POSTGRES_PASSWORD: watchtower_ci
+          POSTGRES_DB: watchtower
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U watchtower -d watchtower"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Disposable credentials used only by this job's PostgreSQL service.
+      DATABASE_URL: postgresql://watchtower:watchtower_ci@localhost:5432/watchtower?schema=public
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.0.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26.13.0'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter api prisma:generate
+
+      - name: Apply migrations
+        run: pnpm --filter api db:deploy
+
+      - name: Backend unit tests
+        run: pnpm --filter api test
+
+      - name: Backend HTTP tests
+        run: pnpm --filter api test:e2e
+
+      - name: PostgreSQL integration tests
+        run: pnpm --filter api test:integration
+
+      - name: Backend lint
+        run: pnpm --filter api lint
+
+      - name: Backend and worker build
+        run: pnpm --filter api build
+
+      - name: Frontend lint
+        run: pnpm --filter web lint
+
+      - name: Frontend production build
+        run: pnpm --filter web build
