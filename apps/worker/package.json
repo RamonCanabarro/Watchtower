@@ -1,0 +1,9 @@
+{
+  "name": "worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "pnpm --filter api run start:worker",
+    "build": "pnpm --filter api build"
+  }
+}

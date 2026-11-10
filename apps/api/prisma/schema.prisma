@@ -5,9 +5,45 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Monitor {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  url       String
+  interval  Float
+  timeout   Float
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  nextCheckAt DateTime @default(now())
+  leaseUntil DateTime?
+  leaseToken String? @db.Uuid
+  checks Check[]
+
+  @@index([enabled, nextCheckAt])
+}
+enum CheckStatus {
+  ONLINE
+  OFFLINE
+  TIMEOUT
+  ERROR
+}
+
+model Check {
+  id String @id @default(uuid()) @db.Uuid
+  monitorId String @db.Uuid
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  checkedAt DateTime @default(now())
+  status CheckStatus
+  httpStatus Int?
+  responseTime Int
+  error String?
+
+  @@index([monitorId, checkedAt])
 }
