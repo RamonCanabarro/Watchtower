@@ -96,3 +96,14 @@ Para validar reinicialização manualmente, cadastre um monitor, reinicie a API 
 ## Escopo
 
 Este MVP atende uso local com um operador. A API escuta em `127.0.0.1` por padrão. Autenticação, isolamento por usuário, notificações e configuração de produção são etapas futuras. O histórico é mantido integralmente no banco e as consultas da interface são limitadas. Uma política de retenção deve ser definida antes de operação prolongada.
+
+
+## Integração contínua
+
+O workflow `.github/workflows/ci.yml` roda em PRs destinados à `main` e em pushes à `main`. Também pode ser iniciado manualmente na aba Actions depois de estar na branch principal.
+
+O job usa Node.js 26.13.0, pnpm 10.0.0 e um PostgreSQL 17 temporário. Instala as dependências pelo lockfile, gera o Prisma Client, aplica migrações e executa testes unitários, HTTP e de integração, lint e builds do backend/worker e frontend. As credenciais do banco do job são descartáveis. Os arquivos `.env` locais e o banco do desenvolvedor não são usados.
+
+O resultado aparece no PR e na aba Actions. A primeira execução no GitHub precisa ser conferida após publicar a branch e abrir o PR. Para exigir o check antes de cada merge, configure uma regra de proteção da `main` com o check `Tests, lint and builds` obrigatório.
+
+Referências oficiais: [PostgreSQL no GitHub Actions](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers), [cache do pnpm com setup-node](https://github.com/actions/setup-node/blob/main/docs/advanced-usage.md).
