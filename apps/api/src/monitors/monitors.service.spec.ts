@@ -13,9 +13,11 @@ describe('MonitorsService', () => {
       interval: 60.5,
       timeout: 1.5,
     };
-    await expect(service.create(input)).resolves.toEqual({ id: 'saved' });
+    await expect(service.create(input, 'owner')).resolves.toEqual({
+      id: 'saved',
+    });
     expect(create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: input }),
+      expect.objectContaining({ data: { ...input, userId: 'owner' } }),
     );
   });
   it('reports missing monitors', async () => {
@@ -23,7 +25,7 @@ describe('MonitorsService', () => {
       monitor: { findUnique: vi.fn().mockResolvedValue(null) },
     } as unknown as PrismaService;
     await expect(
-      new MonitorsService(prisma).findOne('missing'),
+      new MonitorsService(prisma).findOne('missing', 'owner'),
     ).rejects.toThrow('Monitor não encontrado.');
   });
 });

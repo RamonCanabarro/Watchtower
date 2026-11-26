@@ -1,7 +1,8 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { apiRequest, ApiError, type Monitor } from "@/lib/monitors";
+import { apiRequest, ApiError } from "@/lib/api";
+import type { Monitor } from "@/lib/monitors";
 
 export type FormState = { message: string; success: boolean };
 
@@ -40,7 +41,8 @@ export async function createMonitor(
         timeout,
       }),
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) redirect("/login");
     return {
       message:
         "Não foi possível cadastrar. Confira os campos e se a API está disponível.",
@@ -68,7 +70,8 @@ export async function toggleMonitor(
       method: "PATCH",
       body: JSON.stringify({ enabled }),
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) redirect("/login");
     return { message: "Não foi possível alterar o monitor.", success: false };
   }
   revalidatePath("/");
@@ -119,7 +122,8 @@ export async function editMonitor(
         timeout,
       }),
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) redirect("/login");
     return {
       message:
         "Não foi possível salvar. Confira os campos e se a API está disponível.",
@@ -146,6 +150,7 @@ export async function deleteMonitor(
   try {
     await apiRequest<void>(`/monitors/${id}`, { method: "DELETE" });
   } catch (error) {
+    if (error instanceof ApiError && error.status === 401) redirect("/login");
     // A retry after a lost response, or a deletion in another tab, is already complete.
     if (!(error instanceof ApiError && error.status === 404)) {
       return {

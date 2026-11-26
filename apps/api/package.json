@@ -24,7 +24,8 @@
     "prisma:generate": "prisma generate --config prisma7.config.ts --no-hints",
     "db:migrate": "prisma migrate dev --config prisma7.config.ts",
     "db:deploy": "prisma migrate deploy --config prisma7.config.ts",
-    "test:integration": "node test/run-integration.mjs"
+    "test:integration": "node test/run-integration.mjs",
+    "monitors:claim": "node scripts/claim-monitors.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.1.2",
