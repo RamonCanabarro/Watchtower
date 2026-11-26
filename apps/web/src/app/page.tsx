@@ -1,3 +1,5 @@
+import { requireUser } from "@/lib/session";
+import { logout } from "./auth-actions";
 import { Suspense } from "react";
 import MonitorCard from "@/components/MonitorCard";
 import MonitorForm from "@/components/MonitorForm";
@@ -64,7 +66,8 @@ async function MonitorList() {
     </>
   );
 }
-export default function Home() {
+async function Dashboard() {
+  const user = await requireUser();
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
       <div className="mx-auto max-w-5xl">
@@ -74,6 +77,14 @@ export default function Home() {
             Monitore a disponibilidade das suas aplicações e APIs.
           </p>
         </header>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm">
+          <p className="break-all text-slate-400">{user.email}</p>
+          <form action={logout}>
+            <button className="rounded-lg border border-slate-700 px-4 py-2">
+              Sair
+            </button>
+          </form>
+        </div>
         <MonitorForm />
         <section className="mt-12" aria-labelledby="monitors-heading">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -96,5 +107,19 @@ export default function Home() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
+          Carregando sua conta…
+        </main>
+      }
+    >
+      <Dashboard />
+    </Suspense>
   );
 }

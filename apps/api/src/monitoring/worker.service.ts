@@ -47,6 +47,7 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
     const monitors = await this.prisma.monitor.findMany({
       where: {
         enabled: true,
+        userId: { not: null },
         nextCheckAt: { lte: now },
         OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }],
       },

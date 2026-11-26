@@ -1,3 +1,5 @@
+import { requireUser } from "@/lib/session";
+import { apiRequest } from "@/lib/api";
 import { Suspense } from "react";
 import Link from "next/link";
 import MonitorDelete from "@/components/MonitorDelete";
@@ -5,7 +7,6 @@ import MonitorEdit from "@/components/MonitorEdit";
 import MonitorToggle from "@/components/MonitorToggle";
 import Refresh from "@/components/Refresh";
 import {
-  apiRequest,
   formatDate,
   statusLabels,
   type Check,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/monitors";
 
 async function MonitorDetail({ params }: { params: Promise<{ id: string }> }) {
+  await requireUser();
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id))
     return <p className="mt-6">Identificador de monitor inválido.</p>;

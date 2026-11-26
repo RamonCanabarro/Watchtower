@@ -7,9 +7,14 @@ describe('MonitorsController', () => {
     const controller = new MonitorsController({
       history,
     } as unknown as MonitorsService);
-    expect(() => controller.history('id', 101)).toThrow();
+    expect(() =>
+      controller.history('id', 101, { id: 'owner', email: 'test@example.com' }),
+    ).toThrow();
     expect(history).not.toHaveBeenCalled();
-    await controller.history('id', 50);
-    expect(history).toHaveBeenCalledWith('id', 50);
+    await controller.history('id', 50, {
+      id: 'owner',
+      email: 'test@example.com',
+    });
+    expect(history).toHaveBeenCalledWith('id', 'owner', 50);
   });
 });
