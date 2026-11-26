@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import MonitorDelete from "@/components/MonitorDelete";
 import MonitorEdit from "@/components/MonitorEdit";
 import MonitorToggle from "@/components/MonitorToggle";
 import Refresh from "@/components/Refresh";
@@ -134,6 +135,7 @@ async function MonitorDetail({ params }: { params: Promise<{ id: string }> }) {
           </table>
         </div>
       )}
+      <MonitorDelete id={id} name={monitor.name} />
     </>
   );
 }

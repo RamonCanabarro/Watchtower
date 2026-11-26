@@ -2,6 +2,8 @@ import {
   Inject,
   Body,
   Controller,
+  Delete,
+  HttpCode,
   DefaultValuePipe,
   Get,
   Param,
@@ -41,6 +43,11 @@ export class MonitorsController {
   }
   @Get(':id/summary') summary(@Param('id', ParseUUIDPipe) id: string) {
     return this.monitorsService.summary(id);
+  }
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    await this.monitorsService.remove(id);
   }
   @Put(':id') update(
     @Param('id', ParseUUIDPipe) id: string,

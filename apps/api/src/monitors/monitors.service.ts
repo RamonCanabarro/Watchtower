@@ -73,6 +73,12 @@ export class MonitorsService {
     };
   }
 
+  async remove(id: string): Promise<void> {
+    // The foreign key removes the checks in the same database operation.
+    const result = await this.prisma.monitor.deleteMany({ where: { id } });
+    if (!result.count) throw new NotFoundException('Monitor não encontrado.');
+  }
+
   async update(id: string, dto: CreateMonitorDto) {
     const result = await this.prisma.monitor.updateMany({
       where: { id },

@@ -65,6 +65,7 @@ Destinos privados, loopback, link-local e outros endereços reservados são bloq
 - `POST /monitors` cria com `name`, `url`, `interval` e `timeout`.
 - `GET /monitors/:id` consulta um monitor.
 - `PATCH /monitors/:id` altera `enabled`.
+- `DELETE /monitors/:id` exclui o monitor e seu histórico. Retorna 204 sem corpo, 404 para um monitor inexistente e 400 para UUID inválido.
 - `PUT /monitors/:id` edita nome, URL, intervalo e timeout com as mesmas validações do cadastro.
 - `GET /monitors/:id/checks?limit=50` retorna até 100 verificações recentes.
 - `GET /monitors/:id/summary` calcula indicadores das últimas 24 horas.
@@ -125,3 +126,10 @@ pnpm --filter api db:deploy
 pnpm --filter api prisma:generate
 pnpm --filter api build
 ```
+
+
+## Exclusão de monitores
+
+Na página de detalhes, use **Excluir monitor**. A confirmação exibe o nome e avisa que o histórico também será apagado permanentemente. **Cancelar** fecha a confirmação. Durante o envio, os botões ficam desabilitados. Após excluir, a aplicação retorna ao dashboard e atualiza a listagem. Uma falha de comunicação mostra uma mensagem e permite tentar novamente. Se outra aba já excluiu o monitor, a confirmação também retorna ao dashboard.
+
+O PostgreSQL remove os registros vinculados de `Check` por exclusão em cascata. Uma verificação em andamento pode terminar sua requisição HTTP, mas seu resultado é descartado quando a reserva não encontra mais o monitor. A operação não exige migração adicional.
