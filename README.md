@@ -65,6 +65,7 @@ Destinos privados, loopback, link-local e outros endereços reservados são bloq
 - `POST /monitors` cria com `name`, `url`, `interval` e `timeout`.
 - `GET /monitors/:id` consulta um monitor.
 - `PATCH /monitors/:id` altera `enabled`.
+- `PUT /monitors/:id` edita nome, URL, intervalo e timeout com as mesmas validações do cadastro.
 - `GET /monitors/:id/checks?limit=50` retorna até 100 verificações recentes.
 - `GET /monitors/:id/summary` calcula indicadores das últimas 24 horas.
 
@@ -107,3 +108,20 @@ O job usa Node.js 26.13.0, pnpm 10.0.0 e um PostgreSQL 17 temporário. Instala a
 O resultado aparece no PR e na aba Actions. A primeira execução no GitHub precisa ser conferida após publicar a branch e abrir o PR. Para exigir o check antes de cada merge, configure uma regra de proteção da `main` com o check `Tests, lint and builds` obrigatório.
 
 Referências oficiais: [PostgreSQL no GitHub Actions](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers), [cache do pnpm com setup-node](https://github.com/actions/setup-node/blob/main/docs/advanced-usage.md).
+
+
+## Edição de monitores
+
+Na página de detalhes, use **Editar monitor**. O formulário abre preenchido e permite salvar nome, URL, intervalo e timeout ou cancelar. A edição preserva o estado habilitado/pausado e o histórico. O formulário mantém o que foi digitado se o salvamento falhar.
+
+Uma edição agenda uma nova verificação para um monitor habilitado. Uma requisição já em andamento termina usando sua configuração original. A reserva é mantida até essa conclusão, evitando uma segunda execução simultânea. Se houve mudança de configuração durante a requisição, o worker libera a reserva e deixa a nova configuração pronta para execução.
+
+As novas verificações registram a URL original em `checkedUrl`. Registros anteriores à migração mostram **URL não registrada**, pois o endereço usado no passado não pode ser reconstruído com segurança. Ao trocar a URL, o cartão fica pendente até obter um resultado para o novo endereço. Os indicadores das últimas 24 horas continuam incluindo o histórico de todas as URLs do monitor.
+
+Aplique a migração e regenere o client antes de iniciar a API e o worker atualizados:
+
+```bash
+pnpm --filter api db:deploy
+pnpm --filter api prisma:generate
+pnpm --filter api build
+```

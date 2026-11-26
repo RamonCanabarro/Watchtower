@@ -73,6 +73,21 @@ export class MonitorsService {
     };
   }
 
+  async update(id: string, dto: CreateMonitorDto) {
+    const result = await this.prisma.monitor.updateMany({
+      where: { id },
+      data: {
+        name: dto.name,
+        url: dto.url,
+        interval: dto.interval,
+        timeout: dto.timeout,
+        nextCheckAt: new Date(),
+      },
+    });
+    if (!result.count) throw new NotFoundException('Monitor não encontrado.');
+    return this.findOne(id);
+  }
+
   async setEnabled(id: string, enabled: boolean) {
     await this.findOne(id);
     // updateMany allows deletion between the lookup and the write without exposing a Prisma error.

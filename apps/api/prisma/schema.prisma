@@ -41,6 +41,7 @@ model Check {
   monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
   checkedAt DateTime @default(now())
   status CheckStatus
+  checkedUrl String?
   httpStatus Int?
   responseTime Int
   error String?

@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
+  Put,
   Post,
   Query,
   BadRequestException,
@@ -40,6 +41,12 @@ export class MonitorsController {
   }
   @Get(':id/summary') summary(@Param('id', ParseUUIDPipe) id: string) {
     return this.monitorsService.summary(id);
+  }
+  @Put(':id') update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateMonitorDto,
+  ) {
+    return this.monitorsService.update(id, dto);
   }
   @Patch(':id') setEnabled(
     @Param('id', ParseUUIDPipe) id: string,

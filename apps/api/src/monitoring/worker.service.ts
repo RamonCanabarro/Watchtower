@@ -60,6 +60,9 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
           where: {
             id: monitor.id,
             enabled: true,
+            url: monitor.url,
+            interval: monitor.interval,
+            timeout: monitor.timeout,
             nextCheckAt: { lte: now },
             OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }],
           },
@@ -79,11 +82,14 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
             { now: Date }[]
           >`SELECT clock_timestamp() AT TIME ZONE 'UTC' AS now`;
           const completedAt = clock!.now;
-          const released = await tx.monitor.updateMany({
+          let released = await tx.monitor.updateMany({
             where: {
               id: monitor.id,
               leaseToken: token,
               leaseUntil: { gte: completedAt },
+              url: monitor.url,
+              interval: monitor.interval,
+              timeout: monitor.timeout,
             },
             data: {
               leaseUntil: null,
@@ -93,11 +99,28 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
               ),
             },
           });
+          // An edit during the request keeps its new schedule and the existing lease.
+          // Release that lease after this request and make the edited target due immediately.
+          if (!released.count) {
+            released = await tx.monitor.updateMany({
+              where: {
+                id: monitor.id,
+                leaseToken: token,
+                leaseUntil: { gte: completedAt },
+              },
+              data: {
+                leaseUntil: null,
+                leaseToken: null,
+                nextCheckAt: completedAt,
+              },
+            });
+          }
           if (released.count)
             await tx.check.create({
               data: {
                 monitorId: monitor.id,
                 checkedAt: completedAt,
+                checkedUrl: monitor.url,
                 ...result,
               },
             });

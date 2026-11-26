@@ -1,8 +1,13 @@
 import Link from "next/link";
-import { formatDate, statusLabels, type Monitor } from "@/lib/monitors";
+import {
+  formatDate,
+  statusLabels,
+  latestCheckForCurrentUrl,
+  type Monitor,
+} from "@/lib/monitors";
 
 export default function MonitorCard({ monitor }: { monitor: Monitor }) {
-  const check = monitor.checks[0];
+  const check = latestCheckForCurrentUrl(monitor);
   const statusColor =
     check?.status === "ONLINE"
       ? "text-emerald-300"

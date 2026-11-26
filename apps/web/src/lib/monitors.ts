@@ -1,6 +1,7 @@
 export type Check = {
   id: string;
   checkedAt: string;
+  checkedUrl: string | null;
   status: "ONLINE" | "OFFLINE" | "TIMEOUT" | "ERROR";
   httpStatus: number | null;
   responseTime: number;
@@ -50,6 +51,11 @@ export async function apiRequest<T>(
     );
   }
   return response.json();
+}
+export function latestCheckForCurrentUrl(monitor: Monitor): Check | undefined {
+  const latest = monitor.checks[0];
+  // Legacy results have no recorded URL and cannot establish this target's status.
+  return latest?.checkedUrl === monitor.url ? latest : undefined;
 }
 export function getMonitors() {
   return apiRequest<Monitor[]>("/monitors");
