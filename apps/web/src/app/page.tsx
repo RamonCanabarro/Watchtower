@@ -2,7 +2,11 @@ import { Suspense } from "react";
 import MonitorCard from "@/components/MonitorCard";
 import MonitorForm from "@/components/MonitorForm";
 import Refresh from "@/components/Refresh";
-import { getMonitors, type Monitor } from "@/lib/monitors";
+import {
+  getMonitors,
+  latestCheckForCurrentUrl,
+  type Monitor,
+} from "@/lib/monitors";
 
 async function MonitorList() {
   let monitors: Monitor[];
@@ -21,9 +25,11 @@ async function MonitorList() {
   }
   const enabled = monitors.filter((monitor) => monitor.enabled);
   const online = enabled.filter(
-    (monitor) => monitor.checks[0]?.status === "ONLINE",
+    (monitor) => latestCheckForCurrentUrl(monitor)?.status === "ONLINE",
   ).length;
-  const pending = enabled.filter((monitor) => !monitor.checks.length).length;
+  const pending = enabled.filter(
+    (monitor) => !latestCheckForCurrentUrl(monitor),
+  ).length;
   const metrics = [
     ["Monitores", monitors.length],
     ["Habilitados", enabled.length],

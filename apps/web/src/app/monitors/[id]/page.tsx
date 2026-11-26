@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import MonitorEdit from "@/components/MonitorEdit";
 import MonitorToggle from "@/components/MonitorToggle";
 import Refresh from "@/components/Refresh";
 import {
@@ -42,6 +43,7 @@ async function MonitorDetail({ params }: { params: Promise<{ id: string }> }) {
         {monitor.enabled ? "Habilitado" : "Pausado"}
       </p>
       <MonitorToggle id={id} enabled={monitor.enabled} />
+      <MonitorEdit monitor={monitor} />
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         {[
           [
@@ -69,7 +71,8 @@ async function MonitorDetail({ params }: { params: Promise<{ id: string }> }) {
       </div>
       <p className="mt-3 text-sm text-slate-400">
         Disponibilidade estimada pela proporção de verificações com sucesso.
-        Tempos medidos até receber os cabeçalhos HTTP. Horários de Brasília.
+        Tempos medidos até receber os cabeçalhos HTTP. O histórico e os
+        indicadores incluem URLs anteriores deste monitor. Horários de Brasília.
       </p>
       <h2 className="mt-10 text-xl font-semibold">Últimas 50 verificações</h2>
       {history.length === 0 ? (
@@ -85,17 +88,22 @@ async function MonitorDetail({ params }: { params: Promise<{ id: string }> }) {
             </caption>
             <thead className="text-slate-400">
               <tr>
-                {["Horário", "Resultado", "HTTP", "Resposta", "Detalhes"].map(
-                  (title) => (
-                    <th
-                      key={title}
-                      scope="col"
-                      className="border-b border-slate-700 px-3 py-3"
-                    >
-                      {title}
-                    </th>
-                  ),
-                )}
+                {[
+                  "Horário",
+                  "URL verificada",
+                  "Resultado",
+                  "HTTP",
+                  "Resposta",
+                  "Detalhes",
+                ].map((title) => (
+                  <th
+                    key={title}
+                    scope="col"
+                    className="border-b border-slate-700 px-3 py-3"
+                  >
+                    {title}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -105,6 +113,10 @@ async function MonitorDetail({ params }: { params: Promise<{ id: string }> }) {
                     <time dateTime={check.checkedAt}>
                       {formatDate(check.checkedAt)}
                     </time>
+                  </td>
+                  <td className="max-w-xs break-words px-3 py-3">
+                    {check.checkedUrl ??
+                      "URL não registrada (verificação anterior à edição)"}
                   </td>
                   <td
                     className={`px-3 py-3 ${check.status === "ONLINE" ? "text-emerald-300" : "text-red-300"}`}

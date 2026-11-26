@@ -77,3 +77,58 @@ export async function toggleMonitor(
     success: true,
   };
 }
+
+export async function editMonitor(
+  id: string,
+  _previous: FormState,
+  data: FormData,
+): Promise<FormState> {
+  void _previous;
+  const name = data.get("name");
+  const url = data.get("url");
+  const interval = Number(data.get("interval"));
+  const timeout = Number(data.get("timeout"));
+  if (
+    !/^[0-9a-f-]{36}$/i.test(id) ||
+    typeof name !== "string" ||
+    !name.trim() ||
+    name.trim().length > 120 ||
+    typeof url !== "string" ||
+    !url.trim() ||
+    url.length > 2048 ||
+    !Number.isFinite(interval) ||
+    interval < 60 ||
+    interval > 86400 ||
+    !Number.isFinite(timeout) ||
+    timeout < 1 ||
+    timeout > 30
+  ) {
+    return {
+      message: "Confira o nome, a URL, o intervalo e o timeout.",
+      success: false,
+    };
+  }
+  try {
+    await apiRequest<Monitor>(`/monitors/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name: name.trim(),
+        url: url.trim(),
+        interval,
+        timeout,
+      }),
+    });
+  } catch {
+    return {
+      message:
+        "Não foi possível salvar. Confira os campos e se a API está disponível.",
+      success: false,
+    };
+  }
+  revalidatePath("/");
+  revalidatePath(`/monitors/${id}`);
+  return {
+    message: "Monitor atualizado. O histórico foi preservado.",
+    success: true,
+  };
+}
