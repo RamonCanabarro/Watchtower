@@ -277,4 +277,100 @@ describe('Persisted monitoring lifecycle', () => {
       else process.env.ALLOW_PRIVATE_TARGETS = original;
     }
   });
+
+  it('deletes a monitor and all its checks, returning 404 for a repeated delete', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/monitors')
+      .send({
+        name: 'Delete with history',
+        url: target,
+        interval: 60,
+        timeout: 1,
+      })
+      .expect(201);
+    const deleteId = created.body.id as string;
+    ids.push(deleteId);
+    await prisma.check.createMany({
+      data: [
+        {
+          monitorId: deleteId,
+          checkedUrl: target,
+          status: 'ONLINE',
+          httpStatus: 200,
+          responseTime: 10,
+        },
+        {
+          monitorId: deleteId,
+          checkedUrl: target,
+          status: 'OFFLINE',
+          httpStatus: 503,
+          responseTime: 20,
+        },
+      ],
+    });
+    const response = await request(app.getHttpServer())
+      .delete(`/monitors/${deleteId}`)
+      .expect(204);
+    expect(response.text).toBe('');
+    expect(
+      await prisma.monitor.findUnique({ where: { id: deleteId } }),
+    ).toBeNull();
+    expect(await prisma.check.count({ where: { monitorId: deleteId } })).toBe(
+      0,
+    );
+    await request(app.getHttpServer()).get(`/monitors/${deleteId}`).expect(404);
+    await request(app.getHttpServer())
+      .get(`/monitors/${deleteId}/checks`)
+      .expect(404);
+    await request(app.getHttpServer())
+      .delete(`/monitors/${deleteId}`)
+      .expect(404);
+    await request(app.getHttpServer())
+      .delete('/monitors/invalid-id')
+      .expect(400);
+  });
+
+  it('does not recreate a deleted monitor or its checks when an in-flight request finishes', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/monitors')
+      .send({
+        name: 'Delete during a check',
+        url: `${target}/hold`,
+        interval: 60,
+        timeout: 5,
+      })
+      .expect(201);
+    const deleteId = created.body.id as string;
+    ids.push(deleteId);
+    heldResponse = undefined;
+    const entered = new Promise<void>((resolve) => {
+      notifyHeld = resolve;
+    });
+    const worker = new WorkerService(prisma);
+    const original = process.env.ALLOW_PRIVATE_TARGETS;
+    process.env.ALLOW_PRIVATE_TARGETS = 'true';
+    let running: Promise<void> | undefined;
+    try {
+      running = worker.tick();
+      await entered;
+      await request(app.getHttpServer())
+        .delete(`/monitors/${deleteId}`)
+        .expect(204);
+      heldResponse!.writeHead(200);
+      heldResponse!.end('response after deletion');
+      await running;
+      await worker.tick();
+      expect(
+        await prisma.monitor.findUnique({ where: { id: deleteId } }),
+      ).toBeNull();
+      expect(await prisma.check.count({ where: { monitorId: deleteId } })).toBe(
+        0,
+      );
+    } finally {
+      heldResponse?.end();
+      await running;
+      if (original === undefined) delete process.env.ALLOW_PRIVATE_TARGETS;
+      else process.env.ALLOW_PRIVATE_TARGETS = original;
+    }
+  });
 });

@@ -1,6 +1,7 @@
 "use server";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { apiRequest, type Monitor } from "@/lib/monitors";
+import { apiRequest, ApiError, type Monitor } from "@/lib/monitors";
 
 export type FormState = { message: string; success: boolean };
 
@@ -131,4 +132,29 @@ export async function editMonitor(
     message: "Monitor atualizado. O histórico foi preservado.",
     success: true,
   };
+}
+
+export async function deleteMonitor(
+  id: string,
+  _previous: FormState,
+  data: FormData,
+): Promise<FormState> {
+  void _previous;
+  if (!/^[0-9a-f-]{36}$/i.test(id) || data.get("confirmation") !== id) {
+    return { message: "Confirme a exclusão deste monitor.", success: false };
+  }
+  try {
+    await apiRequest<void>(`/monitors/${id}`, { method: "DELETE" });
+  } catch (error) {
+    // A retry after a lost response, or a deletion in another tab, is already complete.
+    if (!(error instanceof ApiError && error.status === 404)) {
+      return {
+        message: "Não foi possível excluir o monitor. Tente novamente.",
+        success: false,
+      };
+    }
+  }
+  revalidatePath("/");
+  revalidatePath(`/monitors/${id}`);
+  redirect("/");
 }

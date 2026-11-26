@@ -26,6 +26,15 @@ export type Summary = {
   windowHours: number;
 };
 
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = "ApiError";
+  }
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
@@ -40,16 +49,19 @@ export async function apiRequest<T>(
   if (!response.ok) {
     if (response.status === 400) {
       const body: { message?: string | string[] } = await response.json();
-      throw new Error(
+      throw new ApiError(
+        response.status,
         Array.isArray(body.message)
           ? body.message.join(" · ")
           : (body.message ?? "Dados inválidos."),
       );
     }
-    throw new Error(
+    throw new ApiError(
+      response.status,
       `Não foi possível concluir a operação (HTTP ${response.status}).`,
     );
   }
+  if (response.status === 204) return undefined as T;
   return response.json();
 }
 export function latestCheckForCurrentUrl(monitor: Monitor): Check | undefined {
